@@ -1,0 +1,19 @@
+[package]
+name = "spliny"
+version = "0.1.0"
+edition = "2018"
+description = "b-Spline Curves"
+authors = ["Gerard Harbers", "Harbers Bik LLC"]
+repository = "https://github.com/harbik/spliny"
+keywords = ["basis-splines", "splines"]
+license = "MIT OR Apache-2.0"
+
+
+[dependencies]
+serde = {version = "1.0", features = ["derive"]}
+serde_json = "1.0"
+
+[dev-dependencies]
+approx = "0.5"
+plotters = "0.3"
+csv = "1.1"
