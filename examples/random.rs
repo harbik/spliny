@@ -1,4 +1,4 @@
-use spline_curves::{Result, SplineCurve};
+use spliny::{Result};
 use std::iter::repeat;
 
 pub fn main() -> Result<()> {
