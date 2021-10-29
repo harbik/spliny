@@ -33,22 +33,21 @@ pub fn range<const K:usize, const N:usize>(s: &SplineCurve<K,N>) -> Result<[f64;
     Ok([x_min, x_max, y_min, y_max])
 }
 
-pub fn half_knots(t: &[f64], k: usize) -> Vec<f64> {
-    t.windows(2).skip(k).map(|t|(t[0]+t[1])/2.0).collect()
+pub fn avg(t: &[f64], k: usize) -> Vec<f64> {
+     t.windows(k).map(|ts|ts.iter().sum::<f64>()/k as f64).collect()
 }
 
 pub fn control_points<const K: usize, const N: usize>(s: &SplineCurve<K,N>) -> Result<Vec<(f64,f64)>> {
-    let hk: Vec<f64>;
     let nc = s.c.len();
     let nc_2 = nc/2;
+   // let knot_avg;
     let c_x: &[f64] = match N {
-        1 => match K {
-            1|3|5 =>  &s.t[K+1/2..],
-            2|4 => {
-                hk = half_knots(&s.t, K/2);
-                &hk
-            },
-            _ => return Err("1<=K<=5".into())
+        1 => {
+            match K {
+             1|3|5 => &s.t[(K+1)/2..],
+             2|4 => &s.t[(K+1)/2..], // todo!
+             _ => return Err("1<=K<=5".into()),
+            }
         }
         2 => &s.c[0..nc_2],
         _ => return Err("Illegal dimension for plot".into())
@@ -62,7 +61,6 @@ pub fn control_points<const K: usize, const N: usize>(s: &SplineCurve<K,N>) -> R
         c_x.iter().cloned().zip(c_y.iter().cloned()).collect()
     )
 }
-
 
 
 /// Plots a two-dimensional (xy) spline curve, its knots, and 
@@ -87,14 +85,20 @@ pub fn plot<const K: usize, const N: usize>(
     chartarea = chartarea.margin(100, 100, 100, 100);
     chartarea.fill(&HSLColor(0.1, 0.5, 0.95))?;
 
-    let mut chart = ChartBuilder::on(&chartarea).margin(50).build_cartesian_2d(
-        x_min - width / 10.0..x_max + width / 10.0,
-        y_min - height / 10.0..y_max + height / 10.0,
-    )?;
-
+    let mut chart = ChartBuilder::on(&chartarea)
+        .margin(50)
+        .set_all_label_area_size(50)
+        .build_cartesian_2d(
+            x_min - width / 10.0..x_max + width / 10.0,
+            y_min - height / 10.0..y_max + height / 10.0,
+        )?;
 
     // draw the mesh
-    chart.configure_mesh().draw()?;
+    chart.configure_mesh()
+        .x_labels(10)
+//        .x_label_formatter(&|v| format!("{:.1}", v))
+        .label_style(TextStyle::from(("sans-serif", 20).into_font()))
+        .draw()?;
 
     // draw control points
     chart.draw_series(

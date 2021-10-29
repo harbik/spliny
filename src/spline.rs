@@ -105,6 +105,9 @@ mod tests {
         y.iter()
             .zip(ytx.iter())
             .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-8));
+
+        let u: Vec<f64>  = (0..100).into_iter().map(|v|v as f64/100.0).collect();
+        s.plot("test.png", (2000,1000), &u, None).unwrap();
     }
     #[test]
     fn quadratic_bspline() {
@@ -126,12 +129,17 @@ mod tests {
         y.iter()
             .zip(ytx.iter())
             .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-8));
+
+        let u: Vec<f64>  = (0..300).into_iter().map(|v|v as f64/100.0).collect();
+        s.plot("test.png", (2000,1000), &u, None).unwrap();
     }
 
     #[test]
     fn cubic_bspline() {
+        // expected
         let x = vec![-2.0, -1.5, -1.0, -0.6, 0.0, 0.5, 1.5, 2.0];
         let y = vec![0.0, 0.125, 1.0, 2.488, 4.0, 2.875, 0.12500001, 0.0];
+
         let s: SplineCurve<3, 1> = SplineCurve::new(
             vec![-2.0, -2.0, -2.0, -2.0, -1.0, 0.0, 1.0, 2.0, 2.0, 2.0, 2.0],
             vec![0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0],
@@ -147,7 +155,14 @@ mod tests {
         y.iter()
             .zip(ytx.iter())
             .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-7));
+
+        let u: Vec<f64>  = (-200..200).into_iter().map(|v|v as f64/100.0).collect();
+        s.plot("test.png", (2000,1000), &u, None).unwrap();
+
     }
+
+
+
     #[test]
     fn quartic_bspline() {
         let x = vec![0.0, 0.4, 1.0, 1.5, 2.0, 2.5, 3.0, 3.2, 4.1, 4.5, 5.0];
