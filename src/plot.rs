@@ -2,6 +2,7 @@
 
 use super::{Result, SplineCurve};
 use plotters::{prelude::*};
+use std::iter::repeat;
 
 
 pub fn range_knots<const K:usize, const N:usize>(s: &SplineCurve<K,N>) -> Result<[f64;4]> {
@@ -69,20 +70,37 @@ pub fn avg(t: &[f64], k: usize) -> Vec<f64> {
 
 /// Plots a two-dimensional (xy) spline curve for testing review
 ///  
-pub fn plot<const K: usize, const N: usize>(
+pub fn plot_base<const K: usize, const N: usize>(
     s: SplineCurve<K,N>,
     filepath: &str,
     wxh: (u32, u32),
-    u: &[f64],
+    u: Option<&[f64]>,
     xy: Option<&[f64]>,
+    plot_control_points: bool,
 ) -> Result<()> {
-   // if N>2 { return Err("only 2D plots supported".into())}
+
+    const M:usize = 101;
+
+    let uv: Vec<f64>;
+
+    let u = u.unwrap_or({
+        let n = s.t.len();
+        let tb = s.t[0];
+        let te = s.t[n-1];
+        let ts = (te-tb)/(M-1) as f64;
+        uv = repeat(ts).take(M).scan(tb, |s, x| { let t= *s;  *s+=x; Some(t)}).collect();
+        &uv
+    });
 
     let s_xy = s.evaluate(&u)?;
 
     let [x_min, x_max, y_min, y_max] = match N {
            1 => range_spline(u, &s_xy)?,
-           2 => range_knots(&s)?,
+           2 => if plot_control_points {
+                    range_knots(&s)?
+                } else {
+                    range_spline(u, &s_xy)?
+                },
            _ => return Err("only 2D plots supported".into())
         };
 
@@ -113,8 +131,8 @@ pub fn plot<const K: usize, const N: usize>(
         .label_style(TextStyle::from(("sans-serif", 20).into_font()))
         .draw()?;
 
-    if N==2 {
-        // draw control points, only in 2D case
+    if N==2 && plot_control_points {
+        // draw control points, only in 2D case, and if requested
         let nc = s.c.len();
         let nc_2 = nc/2;
         let c_x = &s.c[0..nc_2];
@@ -135,7 +153,7 @@ pub fn plot<const K: usize, const N: usize>(
             spline_color.mix(1.0).stroke_width(5)))?;
     } else if N ==1 {
         chart.draw_series(LineSeries::new(
-            u.iter().skip((K+1)/2).zip(s_xy.iter()).map(|(&x,&y)|(x,y)),
+            u.iter().zip(s_xy.iter()).map(|(&x,&y)|(x,y)),
             spline_color.mix(1.0).stroke_width(5)))?;
 
     }

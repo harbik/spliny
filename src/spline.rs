@@ -1,5 +1,5 @@
 use super::Result;
-use super::plot;
+use super::plot_base;
 use serde::{Deserialize, Serialize};
 
 /**
@@ -18,8 +18,20 @@ impl<const K: usize, const N: usize> SplineCurve<K, N> {
         Self { t, c, k: K, n: N }
     }
 
-    pub fn plot(self, filepath: &str, wxh: (u32, u32), u:&[f64], xy: Option<&[f64]>) -> Result<()> {
-        Ok(plot(self, filepath, wxh, u, xy)?)
+    pub fn plot(self, filepath: &str, wxh: (u32, u32)) -> Result<()> {
+        Ok(plot_base(self, filepath, wxh, None, None, false)?)
+    }
+
+    pub fn plot_with_parameter(self, filepath: &str, wxh: (u32, u32), u:Option<&[f64]>) -> Result<()> {
+        Ok(plot_base(self, filepath, wxh, u, None, false)?)
+    }
+
+    pub fn plot_with_control_points(self, filepath: &str, wxh: (u32, u32)) -> Result<()> {
+        Ok(plot_base(self, filepath, wxh, None, None, true)?)
+    }
+
+    pub fn plot_with_data(self, filepath: &str, wxh: (u32, u32), u:Option<&[f64]>, xy: Option<&[f64]>, plot_control_points: bool) -> Result<()> {
+        Ok(plot_base(self, filepath, wxh, u, xy, plot_control_points)?)
     }
 
     pub fn evaluate(&self, us: &[f64]) -> Result<Vec<f64>> {
@@ -106,8 +118,8 @@ mod tests {
             .zip(ytx.iter())
             .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-8));
 
-        let u: Vec<f64>  = (0..100).into_iter().map(|v|v as f64/100.0).collect();
-        s.plot("test.png", (1500,1000), &u, None).unwrap();
+    //    let u: Vec<f64>  = (0..100).into_iter().map(|v|v as f64/100.0).collect();
+        s.plot("test.png", (1500,1000)).unwrap();
     }
     #[test]
     fn quadratic_bspline() {
@@ -124,14 +136,7 @@ mod tests {
             .zip(yt.iter())
             .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-8));
 
-        let ytx = s.evaluate(&x).unwrap();
-        //  println!("{:?}", ytx);
-        y.iter()
-            .zip(ytx.iter())
-            .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-8));
-
-        let u: Vec<f64>  = (0..300).into_iter().map(|v|v as f64/100.0).collect();
-        s.plot("test.png", (1500,1000), &u, None).unwrap();
+        s.plot("test.png", (1500,1000)).unwrap();
     }
 
     #[test]
@@ -144,20 +149,14 @@ mod tests {
             vec![-2.0, -2.0, -2.0, -2.0, -1.0, 0.0, 1.0, 2.0, 2.0, 2.0, 2.0],
             vec![0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0],
         );
+
+        //
         let yt = s.evaluate(&x).unwrap();
-        //println!("{:?}", yt);
         y.iter()
             .zip(yt.iter())
             .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-7));
 
-        let ytx = s.evaluate(&x).unwrap();
-        //println!("{:?}", ytx);
-        y.iter()
-            .zip(ytx.iter())
-            .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-7));
-
-        let u: Vec<f64>  = (-200..200).into_iter().map(|v|v as f64/100.0).collect();
-        s.plot("test.png", (2000,1000), &u, None).unwrap();
+        s.plot("test.png", (2000,1000)).unwrap();
 
     }
 
@@ -196,7 +195,6 @@ mod tests {
         y.iter()
             .zip(ytx.iter())
             .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-7));
-        let u: Vec<f64>  = (0..100).into_iter().map(|v|v as f64/20.0).collect();
-        s.plot("test.png", (2000,1000), &u, None).unwrap();
+        s.plot("test.png", (2000,1000)).unwrap();
     }
 }
