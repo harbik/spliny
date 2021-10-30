@@ -4,7 +4,7 @@ use super::{Result, SplineCurve};
 use plotters::{prelude::*};
 
 
-pub fn range<const K:usize, const N:usize>(s: &SplineCurve<K,N>) -> Result<[f64;4]> {
+pub fn range_knots<const K:usize, const N:usize>(s: &SplineCurve<K,N>) -> Result<[f64;4]> {
     let nc = s.c.len();
     let nc_2 = nc/2;
     let (x_min, x_max) = match N {
@@ -33,37 +33,41 @@ pub fn range<const K:usize, const N:usize>(s: &SplineCurve<K,N>) -> Result<[f64;
     Ok([x_min, x_max, y_min, y_max])
 }
 
+pub fn range_spline(u: &[f64], xn: &[f64]) -> Result<[f64;4]> {
+    let n = xn.len()/u.len();
+    let (x_min, x_max) = match n {
+        1 => (
+            u.iter().cloned().reduce(f64::min).unwrap(),
+            u.iter().cloned().reduce(f64::max).unwrap(),
+        ),
+        2 => (
+            // step-by starts at 0
+            xn.iter().step_by(1).cloned().reduce(f64::min).unwrap(),
+            xn.iter().step_by(1).cloned().reduce(f64::max).unwrap(),
+        ),
+        _ => return Err("only dimensions 0 and 1 supported".into())
+    };
+    let (y_min, y_max) = match n {
+        1 => (
+            xn.iter().cloned().reduce(f64::min).unwrap(),
+            xn.iter().cloned().reduce(f64::max).unwrap(),
+        ),
+        2 => (
+            xn.iter().skip(1).step_by(1).cloned().reduce(f64::min).unwrap(),
+            xn.iter().skip(1).step_by(1).cloned().reduce(f64::max).unwrap(),
+        ),
+        _ => return Err("only dimensions 0 and 1 supported".into())
+    };
+    Ok([x_min, x_max, y_min, y_max])
+}
+
 pub fn avg(t: &[f64], k: usize) -> Vec<f64> {
      t.windows(k).map(|ts|ts.iter().sum::<f64>()/k as f64).collect()
 }
 
-pub fn control_points<const K: usize, const N: usize>(s: &SplineCurve<K,N>) -> Result<Vec<(f64,f64)>> {
-    let nc = s.c.len();
-    let nc_2 = nc/2;
-   // let knot_avg;
-    let c_x: &[f64] = match N {
-        1 => {
-            match K {
-             1|3|5 => &s.t[(K+1)/2..],
-             2|4 => &s.t[(K+1)/2..], // todo!
-             _ => return Err("1<=K<=5".into()),
-            }
-        }
-        2 => &s.c[0..nc_2],
-        _ => return Err("Illegal dimension for plot".into())
-    };
-    let c_y: &[f64] = match N {
-        1 => &s.c[..],
-        2 => &s.c[nc_2..nc],
-        _ => return Err("Illegal dimension for plot".into())
-    };
-    Ok(
-        c_x.iter().cloned().zip(c_y.iter().cloned()).collect()
-    )
-}
 
 
-/// Plots a two-dimensional (xy) spline curve, its knots, and 
+/// Plots a two-dimensional (xy) spline curve for testing review
 ///  
 pub fn plot<const K: usize, const N: usize>(
     s: SplineCurve<K,N>,
@@ -72,7 +76,16 @@ pub fn plot<const K: usize, const N: usize>(
     u: &[f64],
     xy: Option<&[f64]>,
 ) -> Result<()> {
-    let [x_min, x_max, y_min, y_max] = range(&s)?;
+   // if N>2 { return Err("only 2D plots supported".into())}
+
+    let s_xy = s.evaluate(&u)?;
+
+    let [x_min, x_max, y_min, y_max] = match N {
+           1 => range_spline(u, &s_xy)?,
+           2 => range_knots(&s)?,
+           _ => return Err("only 2D plots supported".into())
+        };
+
     let width = x_max - x_min;
     let height = y_max - y_min;
 
@@ -100,15 +113,22 @@ pub fn plot<const K: usize, const N: usize>(
         .label_style(TextStyle::from(("sans-serif", 20).into_font()))
         .draw()?;
 
-    // draw control points
-    chart.draw_series(
-        control_points(&s)?
-            .into_iter()
-            .map(|xy|Circle::new(xy, 10, spline_color.filled())),
-    )?;
+    if N==2 {
+        // draw control points, only in 2D case
+        let nc = s.c.len();
+        let nc_2 = nc/2;
+        let c_x = &s.c[0..nc_2];
+        let c_y =  &s.c[nc_2..nc];
+       // let c: Vec<(f64,f64)> = c_x.iter().cloned().zip(c_y.iter().cloned()).collect();
+        chart.draw_series(
+           c_x.iter().cloned().zip(c_y.iter().cloned()) 
+         //   control_points(&s)?
+         //       .into_iter()
+                .map(|xy|Circle::new(xy, 10, spline_color.filled())),
+        )?;
+    }
 
     // draw spline 
-    let s_xy = s.evaluate(&u)?;
     if N==2 {
         chart.draw_series(LineSeries::new(
             s_xy.chunks(2).map(|xy|(xy[0],xy[1])),

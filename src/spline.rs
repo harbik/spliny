@@ -107,7 +107,7 @@ mod tests {
             .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-8));
 
         let u: Vec<f64>  = (0..100).into_iter().map(|v|v as f64/100.0).collect();
-        s.plot("test.png", (2000,1000), &u, None).unwrap();
+        s.plot("test.png", (1500,1000), &u, None).unwrap();
     }
     #[test]
     fn quadratic_bspline() {
@@ -131,7 +131,7 @@ mod tests {
             .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-8));
 
         let u: Vec<f64>  = (0..300).into_iter().map(|v|v as f64/100.0).collect();
-        s.plot("test.png", (2000,1000), &u, None).unwrap();
+        s.plot("test.png", (1500,1000), &u, None).unwrap();
     }
 
     #[test]
