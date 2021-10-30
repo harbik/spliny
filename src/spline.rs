@@ -30,8 +30,12 @@ impl<const K: usize, const N: usize> SplineCurve<K, N> {
         Ok(plot_base(self, filepath, wxh, None, None, true)?)
     }
 
-    pub fn plot_with_data(self, filepath: &str, wxh: (u32, u32), u:Option<&[f64]>, xy: Option<&[f64]>, plot_control_points: bool) -> Result<()> {
-        Ok(plot_base(self, filepath, wxh, u, xy, plot_control_points)?)
+    pub fn plot_with_data(self, filepath: &str, wxh: (u32, u32), xy: &[f64]) -> Result<()> {
+        Ok(plot_base(self, filepath, wxh, None, Some(xy), false)?)
+    }
+
+    pub fn plot_with_control_points_and_data(self, filepath: &str, wxh: (u32, u32), xy: &[f64]) -> Result<()> {
+        Ok(plot_base(self, filepath, wxh, None, Some(xy), true)?)
     }
 
     pub fn evaluate(&self, us: &[f64]) -> Result<Vec<f64>> {
