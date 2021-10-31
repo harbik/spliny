@@ -1,4 +1,6 @@
-# A (tiny) Spline Rust library
+# Spliny: Working with Spline Curve
+
+<img src="https://www.harbik.com/img/dierckx/lissajous.png" height="800"/>
 
 
 

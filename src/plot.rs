@@ -142,7 +142,7 @@ pub fn plot_base<const K: usize, const N: usize>(
            c_x.iter().cloned().zip(c_y.iter().cloned()) 
          //   control_points(&s)?
          //       .into_iter()
-                .map(|xy|Circle::new(xy, 10, spline_color.filled())),
+                .map(|xy|Circle::new(xy, 6, spline_color.filled())),
         )?;
     }
 
@@ -154,7 +154,7 @@ pub fn plot_base<const K: usize, const N: usize>(
     } else if N ==1 {
         chart.draw_series(LineSeries::new(
             u.iter().zip(s_xy.iter()).map(|(&x,&y)|(x,y)),
-            spline_color.mix(1.0).stroke_width(5)))?;
+            spline_color.mix(1.0).stroke_width(4)))?;
 
     }
 
