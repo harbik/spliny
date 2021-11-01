@@ -5,7 +5,7 @@ use plotters::{prelude::*};
 use std::iter::repeat;
 
 
-pub fn range_knots<const K:usize, const N:usize>(s: &SplineCurve<K,N>) -> Result<[f64;4]> {
+fn range_knots<const K:usize, const N:usize>(s: &SplineCurve<K,N>) -> Result<[f64;4]> {
     let nc = s.c.len();
     let nc_2 = nc/2;
     let (x_min, x_max) = match N {
@@ -34,7 +34,7 @@ pub fn range_knots<const K:usize, const N:usize>(s: &SplineCurve<K,N>) -> Result
     Ok([x_min, x_max, y_min, y_max])
 }
 
-pub fn range_spline(u: &[f64], xn: &[f64]) -> Result<[f64;4]> {
+fn range_spline(u: &[f64], xn: &[f64]) -> Result<[f64;4]> {
     let n = xn.len()/u.len();
     let (x_min, x_max) = match n {
         1 => (
@@ -62,15 +62,11 @@ pub fn range_spline(u: &[f64], xn: &[f64]) -> Result<[f64;4]> {
     Ok([x_min, x_max, y_min, y_max])
 }
 
-pub fn avg(t: &[f64], k: usize) -> Vec<f64> {
-     t.windows(k).map(|ts|ts.iter().sum::<f64>()/k as f64).collect()
-}
 
 
 
 /// Plots a two-dimensional (xy) spline curve for testing review
-///  
-pub fn plot_base<const K: usize, const N: usize>(
+pub(crate) fn plot_base<const K: usize, const N: usize>(
     s: SplineCurve<K,N>,
     filepath: &str,
     wxh: (u32, u32),

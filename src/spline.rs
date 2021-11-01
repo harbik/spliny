@@ -1,5 +1,5 @@
 use super::Result;
-use super::plot_base;
+use super::plot::plot_base;
 use serde::{Deserialize, Serialize};
 
 /**
@@ -38,27 +38,39 @@ impl<const K: usize, const N: usize> SplineCurve<K, N> {
         Ok(plot_base(self, filepath, wxh, None, Some(xy), true)?)
     }
 
-    pub fn evaluate(&self, us: &[f64]) -> Result<Vec<f64>> {
+    /// Calulates spline coordinates for a collection of parameter values
+    /// 
+    /// The coordinates are given as a one-dimensional array, starting with the N ---with N the dimension of the cuve---  coordinates of the firt point,
+    /// followed by the coordinates of all the other points. For example, for a two-dimensional curve (N=2), the (x,y)-coordinates are given as
+    /// [x0, y0, x1, y1, x2, ...] and for a three-dimensional curve, with coordinates (x,y,z) you will get [x0, y0, z0, x1, y1, z1, x2, y2 ...].
+    /// If you need to convert them into individual coordinate arrays, I suggest to use the [transpose][crate::transpose] function.
+    pub fn evaluate(&self, u: &[f64]) -> Result<Vec<f64>> {
         let n = self.t.len();
         let nc = self.c.len() / N;
-        let mut v: Vec<f64> = Vec::with_capacity(us.len() * N); // x,y,..x,y coordinates
+        if nc<(K+1) {
+            return Err(format!("Need at least {} coefficients to plot a {}-degree Spline curve", N*(n+K+1), K).into());
+        }
+        if nc!=n-(K+1) {
+            return Err(format!("Expected {} coefficient values, got {}", N*(n+K+1), N*nc).into());
+        }
+        let mut v: Vec<f64> = Vec::with_capacity(u.len() * N); // x,y,..x,y coordinates
 
         let mut i = self.k;
         let mut u_prev = f64::NEG_INFINITY;
         let mut d = [0.0; 6]; // want to use K+1 here, but currently not allowed yet by the compiler
 
-        for &u in us {
-            if u <= u_prev {
+        for &t in u {
+            if t <= u_prev {
                 return Err("x values should be sorted in strict increasing order".into());
             } else {
-                u_prev = u;
+                u_prev = t;
             };
 
             // clamp x to interval tb..=te
-            let arg = if u < self.t[self.k] || u > self.t[n - self.k - 1] {
-                u.clamp(self.t[self.k], self.t[n - K - 1])
+            let arg = if t < self.t[self.k] || t > self.t[n - self.k - 1] {
+                t.clamp(self.t[self.k], self.t[n - K - 1])
             } else {
-                u
+                t
             };
 
             // find knot interval which contains x=arg
@@ -79,12 +91,9 @@ impl<const K: usize, const N: usize> SplineCurve<K, N> {
         Ok(v)
     }
 
-    pub fn deboor(&self, i: usize, x: f64, d: &mut [f64; 6]) -> f64 {
-        /*
-        for j in 0..K+1 {
-            d[j] = self.c[(j + i - self.k)];
-        }
-        */
+
+
+    pub(crate) fn deboor(&self, i: usize, x: f64, d: &mut [f64; 6]) -> f64 {
 
         for r in 1..self.k + 1 {
             for j in (r..=self.k).into_iter().rev() {
@@ -95,6 +104,27 @@ impl<const K: usize, const N: usize> SplineCurve<K, N> {
         }
         d[self.k]
     }
+
+    // https://stackoverflow.com/questions/57507696/b-spline-derivative-using-de-boors-algorithm
+    pub(crate) fn deboor_derivative(&self, i: usize, x: f64, d: &mut [f64; 6]) -> (f64, f64) {
+        todo!()
+    }
+
+}
+
+/// Creates coordinate vectors for a vector of coordinates
+/// 
+/// e.g. an input slice &[x0, y0, z0, x1, y1, z1, x2 ...] produces a vector:
+/// vec![vec![x0, x1, x2, ...], vec![y0, y1, y2, ..], vec![z0, z1, z2, ...]]
+pub fn transpose(xyn: &[f64], n: usize) -> Vec<Vec<f64>>{
+    let m = xyn.len()/n; 
+    let mut vn: Vec<Vec<f64>> = std::iter::repeat(Vec::with_capacity(m)).take(n).collect();
+    for v in xyn.chunks(n) {
+        for (i,x) in v.iter().enumerate() {
+            vn[i].push(*x);
+        }
+    }
+    vn
 }
 
 #[cfg(test)]
@@ -160,7 +190,7 @@ mod tests {
             .zip(yt.iter())
             .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-7));
 
-        s.plot("test.png", (2000,1000)).unwrap();
+        s.plot("test.png", (1000,1000)).unwrap();
 
     }
 

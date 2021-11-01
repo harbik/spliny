@@ -17,4 +17,3 @@ pub mod spline;
 pub use spline::*;
 
 pub mod plot;
-pub use plot::*;
