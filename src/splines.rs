@@ -7,13 +7,13 @@ use super::Result;
 /**
  * General B-Spline Curve Knot/Coefficient Representation
  */
-pub struct SplineCurves<const K: usize, const N: usize, const NK: usize, const NC:usize, const NT: usize> {
+pub struct SplineCurves<const K: usize, const N: usize, const NK: usize, const NT:usize, const NC: usize> {
     keys: [(&'static str, [usize;2], [usize;2]); NK],
     t: [i32; NT], // Knot values
     c: [f64; NC], // b-Spline coefficients
 }
 
-impl<const K: usize, const N: usize, const NK: usize, const NC: usize, const NT: usize> SplineCurves<K, N, NK, NC, NT> {
+impl<const K: usize, const N: usize, const NK: usize, const NC: usize, const NT: usize> SplineCurves<K, N, NK, NT, NC> {
     pub const fn new(keys: [(&'static str, [usize;2], [usize;2]); NK], t: [i32; NT], c: [f64; NC]) -> Self {
         Self { keys, t, c }
     }
@@ -52,7 +52,7 @@ impl<const K: usize, const N: usize, const NK: usize, const NC: usize, const NT:
 #[cfg(test)]
 mod tests {
     use crate::{SplineCurves, Result};
-    static MUNSELL_MATT: SplineCurves<3,1,11,153,131> = SplineCurves::new(
+    static MUNSELL_MATT: SplineCurves<3,1,11,131,153> = SplineCurves::new(
         [("2.5R9/2", [0, 14], [0, 16]), ("2.5R8/2", [14, 28], [16, 32]), ("2.5R7/2", [28, 41], [32, 47]), ("2.5R6/2",
             [41, 54], [47, 62]), ("2.5R5/2", [54, 63], [62, 73]), ("2.5R4/2", [63, 72], [73, 84]), ("2.5R3/2", [72, 78],
             [84, 92]), ("2.5R2.5/2", [78, 84], [92, 100]), ("2.5R8/4", [84, 102], [100, 120]), ("2.5R7/4", [102, 118], [120,
