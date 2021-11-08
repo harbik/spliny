@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 /**
  * General B-Spline Curve Knot/Coefficient Representation
  */
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SplineCurve<const K: usize, const N: usize> {
     pub t: Vec<f64>, // Knot values
     pub c: Vec<f64>, // b-Spline coefficients
@@ -106,9 +106,9 @@ impl<const K: usize, const N: usize> SplineCurve<K, N> {
     }
 
     // https://stackoverflow.com/questions/57507696/b-spline-derivative-using-de-boors-algorithm
-    pub(crate) fn deboor_derivative(&self, i: usize, x: f64, d: &mut [f64; 6]) -> (f64, f64) {
-        todo!()
-    }
+   // pub(crate) fn deboor_derivative(&self, i: usize, x: f64, d: &mut [f64; 6]) -> (f64, f64) {
+   //     todo!()
+   // }
 
 }
 

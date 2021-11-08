@@ -16,4 +16,7 @@ pub type QuinticSpline3D = spline::SplineCurve::<5,3>;
 pub mod spline;
 pub use spline::*;
 
+pub mod splines;
+pub use splines::*;
+
 pub mod plot;
