@@ -123,7 +123,7 @@ pub(crate) fn plot_base<const K: usize, const N: usize>(
     // draw the mesh
     chart.configure_mesh()
         .x_labels(10)
-        .x_label_formatter(&|v| format!("{:.2e}", v))
+        .x_label_formatter(&|v| if v>=&300E-9 && v<=&1E-6 {format!("{}", v*1E9)} else {format!("{}", v)})
         .label_style(TextStyle::from(("sans-serif", 20).into_font()))
         .draw()?;
 
