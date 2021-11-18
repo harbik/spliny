@@ -7,6 +7,7 @@ use super::Result;
 /**
  * General B-Spline Curve Knot/Coefficient Representation
  */
+
 pub struct SplineCurves<const K: usize, const N: usize, const NK: usize, const NT:usize, const NC: usize> {
     keys: [(&'static str, [usize;2], [usize;2]); NK],
     t: [i32; NT], // Knot values

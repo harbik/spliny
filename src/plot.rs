@@ -123,7 +123,7 @@ pub(crate) fn plot_base<const K: usize, const N: usize>(
     // draw the mesh
     chart.configure_mesh()
         .x_labels(10)
-//        .x_label_formatter(&|v| format!("{:.1}", v))
+        .x_label_formatter(&|v| format!("{:.2e}", v))
         .label_style(TextStyle::from(("sans-serif", 20).into_font()))
         .draw()?;
 
@@ -162,21 +162,6 @@ pub(crate) fn plot_base<const K: usize, const N: usize>(
         ))?;
     }   
 
-    /* 
-        if flags.contains(Plot2DFlags::LEGEND) {
-            let leg_txt = if let Some(e) = s.e {
-                format!("{} knots  {:.1e} rms", s.t.len(), e)
-            } else {
-                format!("{} knots", s.t.len())
-            };
-
-            chartarea.draw(
-                &(EmptyElement::at((1550, 100))
-                    + Text::new( leg_txt, (0, 0), &"sans-serif".into_font().resize(40.0).color(&spline_color),
-                    )),
-            )?;
-        }
-         */
 
         chartarea.present()?;
     Ok(())
