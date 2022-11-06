@@ -19,4 +19,5 @@ pub use spline::*;
 pub mod splines;
 pub use splines::*;
 
+#[cfg(test)]
 pub mod plot;

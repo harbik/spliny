@@ -1,6 +1,6 @@
 [package]
 name = "spliny"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2018"
 description = "b-Spline Curves"
 authors = ["Gerard Harbers", "Harbers Bik LLC"]
@@ -12,7 +12,7 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
-plotters = "0.3"
 
 [dev-dependencies]
 approx = "0.5"
+plotters = "0.3"

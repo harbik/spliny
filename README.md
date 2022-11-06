@@ -3,7 +3,7 @@
 [Spine curves](https://en.wikipedia.org/wiki/Spline_(mathematics)) are piecewise polynomial (parametric) curves, 
 used for interpolation, curve fitting, and data smoothing.
 
-`Spliny` is a (tiny) pure Rust library to use spline curves, based a `spliny`'s knots and control points in `SplineCurve<K,N>`,
+`Spliny` is a (tiny) pure Rust library for using spline curves, based a `spliny`'s knots and control points in `SplineCurve<K,N>`,
 and to plot splines --currently limited to 1 and 2D splines-- to check the results.
 It does not fit spline functions to data-sets: see the `Splinify`-crate  for that purpose.
 
@@ -97,7 +97,7 @@ The control points are 4 control point: (0,2), (.5,-3), (1,3), and (3,-3), and t
 
 # Usage
 
-Spliny is developed as part of a family of three crates, but can be used independently too:
+Spliny is developed as part of a family of three crates but can be used independently too:
 
 - **splinify** fits (non-uniform) [B-Spline](b-splines) curves to input data,
 and results in a fitted as a `spliny`-crate `CurveSpline`.
@@ -119,7 +119,7 @@ spliny = "0.1"
 ```
 
 # Spline Curve
-The base spline representation in `Spliny` is the `SplineCurve<K,N>` object ---a wrapper for an vector of knots, and
+The base spline representation in `Spliny` is the `SplineCurve<K,N>` object ---a wrapper for a vector of knots, and
 fit coefficients--- with *K* the spline degree, *N* the space dimension of the curve spline.
 
 For convenience, the following aliases have been defined:
@@ -137,8 +137,14 @@ For convenience, the following aliases have been defined:
 | `QuinticSpline3D`     | 5 | 3 |
 
 
+# Versions
+
+## 0.2 
+
+Change `plotters` to a development dependency, with all the plot functionality behind the conditional test configuration flag.
+
 # License
-All content &copy;2021 Harbers Bik LLC, and licensed under either of
+All content &copy;2022 Harbers Bik LLC, and licensed under either of
 
  * Apache License, Version 2.0
    ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
@@ -149,6 +155,6 @@ at your option.
 
 ## Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted
+Unless you explicitly state otherwise, any Contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.

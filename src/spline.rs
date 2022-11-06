@@ -1,4 +1,5 @@
 use super::Result;
+#[cfg(test)]
 use super::plot::plot_base;
 use serde::{Deserialize, Serialize};
 
@@ -18,22 +19,27 @@ impl<const K: usize, const N: usize> SplineCurve<K, N> {
         Self { t, c, k: K, n: N }
     }
 
+    #[cfg(test)]
     pub fn plot(self, filepath: &str, wxh: (u32, u32)) -> Result<()> {
         Ok(plot_base(self, filepath, wxh, None, None, false)?)
     }
 
+    #[cfg(test)]
     pub fn plot_with_parameter(self, filepath: &str, wxh: (u32, u32), u:Option<&[f64]>) -> Result<()> {
         Ok(plot_base(self, filepath, wxh, u, None, false)?)
     }
 
+    #[cfg(test)]
     pub fn plot_with_control_points(self, filepath: &str, wxh: (u32, u32)) -> Result<()> {
         Ok(plot_base(self, filepath, wxh, None, None, true)?)
     }
 
+    #[cfg(test)]
     pub fn plot_with_data(self, filepath: &str, wxh: (u32, u32), xy: &[f64]) -> Result<()> {
         Ok(plot_base(self, filepath, wxh, None, Some(xy), false)?)
     }
 
+    #[cfg(test)]
     pub fn plot_with_control_points_and_data(self, filepath: &str, wxh: (u32, u32), xy: &[f64]) -> Result<()> {
         Ok(plot_base(self, filepath, wxh, None, Some(xy), true)?)
     }
