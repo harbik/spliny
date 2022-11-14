@@ -19,5 +19,5 @@ pub use spline::*;
 pub mod splines;
 pub use splines::*;
 
-#[cfg(test)]
+#[cfg(feature = "plot")]
 pub mod plot;

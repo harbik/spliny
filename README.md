@@ -41,7 +41,7 @@ fn main() -> Result<()> {
 }
 ```
 
-And here is it's associated `Spliny` JSON representation
+And here is its associated `Spliny`` JSON representation
 ```json
 {
   "t": [
@@ -91,7 +91,7 @@ pub fn main() -> Result<()> {
     Ok(())
 }
 ```
-The control points are 4 control point: (0,2), (.5,-3), (1,3), and (3,-3), and the curve has 8 knots.
+The control points are four control points: (0,2), (.5,-3), (1,3), and (3,-3), and the curve has 8 knots.
 
 
 
@@ -101,19 +101,19 @@ Spliny is developed as part of a family of three crates but can be used independ
 
 - **splinify** fits (non-uniform) [B-Spline](b-splines) curves to input data,
 and results in a fitted as a `spliny`-crate `CurveSpline`.
-Data inputs are `x` and `y` vectors for 1 dimensional curves,
+Data inputs are `x` and `y` vectors for 1-dimensional curves,
 and `u` and `xyn` vectors in case of N-dimensional curves.
 
-- Use **spliny** to to use the generated splines, for example to calculate curve coordinates, or a spline-curve's derivatives.
-This package also implements basic tools for input and output of spline representations in form of JSON files, and spline plots.
-It is completely written in Rust, and does **not** require a Fortran compiler. 
+- Use **spliny** to to use the generated splines, for example, to calculate curve coordinates or spline curves derivatives.
+This package also implements basic tools for the input and output of spline representations in JSON files and spline plots.
+It is written in Rust and does **not** require a Fortran compiler. 
 
 - **dierckx-sys** contains Fortran foreign function interfaces to Paul Dierckx' FITPACK library. 
 It is used by `splinify`, but ---unless you want to explore Paul Dierckx library yourself--- can be ignored as concerned to using `splinify` and `spliny`.
 
-To use this library add this to your `Cargo.toml` file:
+To use this library, add this to your `Cargo.toml` file:
 
-```
+```no_run
 [dependencies]
 spliny = "0.1"
 ```
@@ -137,11 +137,17 @@ For convenience, the following aliases have been defined:
 | `QuinticSpline3D`     | 5 | 3 |
 
 
-# Versions
+# Change Log
 
-## 0.2 
+## 0.1.1 
 
-Change `plotters` to a development dependency, with all the plot functionality behind the conditional test configuration flag.
+Plot routines now use the `plot` feature, which is, by default, enabled.
+You can disable this feature by setting  `default-features=false`:
+```no_run
+    // use this in cargo.toml to disable import of plot routines
+    [dependencies]
+    spliny = {version = "0.1.0", default-features = false}
+```
 
 # License
 All content &copy;2022 Harbers Bik LLC, and licensed under either of
@@ -156,5 +162,5 @@ at your option.
 ## Contribution
 
 Unless you explicitly state otherwise, any Contribution intentionally submitted
-for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+for inclusion in the Work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.

@@ -1,7 +1,9 @@
 use super::Result;
-#[cfg(test)]
+#[cfg(feature="plot")]
 use super::plot::plot_base;
 use serde::{Deserialize, Serialize};
+
+const DE_BOOR_SIZE: usize = 12;
 
 /**
  * General B-Spline Curve Knot/Coefficient Representation
@@ -12,34 +14,35 @@ pub struct SplineCurve<const K: usize, const N: usize> {
     pub c: Vec<f64>, // b-Spline coefficients
     k: usize,        // Spline degree
     n: usize,        // Spline dimension
+    i: Option<usize>, // current interval, to speed up multiple evaluations
 }
 
 impl<const K: usize, const N: usize> SplineCurve<K, N> {
     pub fn new(t: Vec<f64>, c: Vec<f64>) -> Self {
-        Self { t, c, k: K, n: N }
+        Self { t, c, k: K, n: N, i: None }
     }
 
-    #[cfg(test)]
+    #[cfg(feature="plot")]
     pub fn plot(self, filepath: &str, wxh: (u32, u32)) -> Result<()> {
         Ok(plot_base(self, filepath, wxh, None, None, false)?)
     }
 
-    #[cfg(test)]
+    #[cfg(feature="plot")]
     pub fn plot_with_parameter(self, filepath: &str, wxh: (u32, u32), u:Option<&[f64]>) -> Result<()> {
         Ok(plot_base(self, filepath, wxh, u, None, false)?)
     }
 
-    #[cfg(test)]
+    #[cfg(feature="plot")]
     pub fn plot_with_control_points(self, filepath: &str, wxh: (u32, u32)) -> Result<()> {
         Ok(plot_base(self, filepath, wxh, None, None, true)?)
     }
 
-    #[cfg(test)]
+    #[cfg(feature="plot")]
     pub fn plot_with_data(self, filepath: &str, wxh: (u32, u32), xy: &[f64]) -> Result<()> {
         Ok(plot_base(self, filepath, wxh, None, Some(xy), false)?)
     }
 
-    #[cfg(test)]
+    #[cfg(feature="plot")]
     pub fn plot_with_control_points_and_data(self, filepath: &str, wxh: (u32, u32), xy: &[f64]) -> Result<()> {
         Ok(plot_base(self, filepath, wxh, None, Some(xy), true)?)
     }
@@ -63,7 +66,7 @@ impl<const K: usize, const N: usize> SplineCurve<K, N> {
 
         let mut i = self.k;
         let mut u_prev = f64::NEG_INFINITY;
-        let mut d = [0.0; 6]; // want to use K+1 here, but currently not allowed yet by the compiler
+        let mut d = [0.0; DE_BOOR_SIZE]; // want to use K+1 here, but currently not allowed yet by the compiler
 
         for &t in u {
             if t <= u_prev {
@@ -98,8 +101,55 @@ impl<const K: usize, const N: usize> SplineCurve<K, N> {
     }
 
 
+    /// Calulates spline coordinates for a collection of parameter values
+    /// 
+    /// The coordinates are given as a one-dimensional array, starting with the N ---with N the dimension of the cuve---  coordinates of the firt point,
+    /// followed by the coordinates of all the other points. For example, for a two-dimensional curve (N=2), the (x,y)-coordinates are given as
+    /// [x0, y0, x1, y1, x2, ...] and for a three-dimensional curve, with coordinates (x,y,z) you will get [x0, y0, z0, x1, y1, z1, x2, y2 ...].
+    /// If you need to convert them into individual coordinate arrays, I suggest to use the [transpose][crate::transpose] function.
+    pub fn eval(&mut self, t: f64) -> std::result::Result<f64, f64> {
 
-    pub(crate) fn deboor(&self, i: usize, x: f64, d: &mut [f64; 6]) -> f64 {
+        let n = self.t.len();
+        let nc = self.c.len() / N;
+
+        if t < self.t[self.k] {
+            Err(t - self.t[self.k])
+        } else if t > self.t[n - self.k - 1] {
+            Err(t - self.t[n - self.k - 1])
+        } else {
+            // find knot interval which contains x=arg
+            let mut i = if let Some(i_prev) = self.i  {  
+                if t>self.t[i_prev] { // continue where we left-off
+                    println!("reusing");
+                    i_prev
+                } else {
+                    println!("restarting");
+                    self.k
+                }
+            } else { // new start or restart 
+                self.k
+            };
+
+            let mut d = [0.0; DE_BOOR_SIZE]; // want to use K+1 here, but currently not allowed yet by the compiler
+            // TODO: test with 10?
+
+            while !(t >= self.t[i] && t <= self.t[i + 1]) {
+                i += 1
+            }
+            self.i = Some(i); // store for next evaluation
+
+            // calculate spline values 
+            for dim in 0..N {
+                // copy relevant c values into d
+                for (j, dm) in d.iter_mut().enumerate().take(K + 1) {
+                    *dm = self.c[dim * nc + j + i - self.k];
+                }
+            }
+            Ok(self.deboor(i, t, &mut d))
+        }
+    }
+
+    pub(crate) fn deboor(&self, i: usize, x: f64, d: &mut [f64; DE_BOOR_SIZE]) -> f64 {
 
         for r in 1..self.k + 1 {
             for j in (r..=self.k).into_iter().rev() {
@@ -200,6 +250,26 @@ mod tests {
 
     }
 
+    #[test]
+    fn cubic_bspline_single_values() {
+        // expected
+        let x = vec![-2.0, -1.5, -1.0, -0.6, 0.0, 0.5, 1.5, 2.0];
+        let y = vec![0.0, 0.125, 1.0, 2.488, 4.0, 2.875, 0.12500001, 0.0];
+
+        let mut s: SplineCurve<3, 1> = SplineCurve::new(
+            vec![-2.0, -2.0, -2.0, -2.0, -1.0, 0.0, 1.0, 2.0, 2.0, 2.0, 2.0],
+            vec![0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0],
+        );
+
+        //
+        let yt: Vec<f64> = x.into_iter().map(|x|s.eval(x).unwrap()).collect();
+        y.iter()
+            .zip(yt.iter())
+            .for_each(|(&a, &b)| assert_abs_diff_eq!(a, b, epsilon = 1E-7));
+
+        s.plot("test.png", (1000,1000)).unwrap();
+
+    }
 
 
     #[test]

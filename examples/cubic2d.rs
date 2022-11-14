@@ -1,3 +1,4 @@
+// cargo run --examples/cubic2d.rs
 use spliny::{CubicSpline2D, Result};
 
 pub fn main() -> Result<()> {
