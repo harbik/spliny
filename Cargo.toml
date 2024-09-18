@@ -1,6 +1,6 @@
 [package]
 name = "spliny"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2018"
 description = "b-Spline Curves"
 authors = ["Gerard Harbers", "Harbers Bik LLC"]
