@@ -1,7 +1,7 @@
 
 
 use super::{Result, SplineCurve};
-use plotters::{prelude::*};
+use plotters::prelude::*;
 use std::iter::repeat;
 
 

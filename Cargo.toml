@@ -19,6 +19,6 @@ approx = "0.5"
 splinify = "0.1"
 
 [features]
-default = ["plot"]
+default = []
 plot = []
 

@@ -1,25 +1,34 @@
 use super::Result;
 #[cfg(feature="plot")]
 use super::plot::plot_base;
-use serde::{Deserialize, Serialize};
 
-const DE_BOOR_SIZE: usize = 12;
+
+const DE_BOOR_SIZE: usize = 6 ;
 
 /**
  * General B-Spline Curve Knot/Coefficient Representation
  */
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct SplineCurve<const K: usize, const N: usize> {
     pub t: Vec<f64>, // Knot values
     pub c: Vec<f64>, // b-Spline coefficients
-    k: usize,        // Spline degree
-    n: usize,        // Spline dimension
+    pub k: usize,        // Spline degree
+    pub n: usize,        // Spline dimension
     i: Option<usize>, // current interval, to speed up multiple evaluations
 }
 
 impl<const K: usize, const N: usize> SplineCurve<K, N> {
     pub fn new(t: Vec<f64>, c: Vec<f64>) -> Self {
         Self { t, c, k: K, n: N, i: None }
+    }
+
+    pub fn try_new(t: Vec<f64>, c: Vec<f64>) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+        let n = t.len();
+        let nc = c.len() / N;
+        if nc<(K+1) {
+            return Err(format!("Need at least {} coefficients to plot a {}-degree Spline curve", N*(n+K+1), K).into());
+        }
+        Ok(Self { t, c, k: K, n: N, i: None })
     }
 
     #[cfg(feature="plot")]
@@ -120,10 +129,10 @@ impl<const K: usize, const N: usize> SplineCurve<K, N> {
             // find knot interval which contains x=arg
             let mut i = if let Some(i_prev) = self.i  {  
                 if t>self.t[i_prev] { // continue where we left-off
-                    println!("reusing");
+                   // println!("reusing");
                     i_prev
                 } else {
-                    println!("restarting");
+                  //  println!("restarting");
                     self.k
                 }
             } else { // new start or restart 
