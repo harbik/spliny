@@ -5,6 +5,8 @@ use plotters::prelude::*;
 use std::iter::repeat;
 
 
+/// Returns `[x_min, x_max, y_min, y_max]` derived from the spline's control points.
+/// Used when `plot_control_points` is true so the axes encompass the full convex hull.
 fn range_knots<const K:usize, const N:usize>(s: &SplineCurve<K,N>) -> Result<[f64;4]> {
     let nc = s.c.len();
     let nc_2 = nc/2;
@@ -17,7 +19,7 @@ fn range_knots<const K:usize, const N:usize>(s: &SplineCurve<K,N>) -> Result<[f6
             s.c[0..nc_2].iter().cloned().reduce(f64::min).unwrap(),
             s.c[0..nc_2].iter().cloned().reduce(f64::max).unwrap(),
         ),
-        _ => return Err("Only one and two dimensional curve splnies supported".into())
+        _ => return Err("Only one and two dimensional curve splines supported".into())
 
     };
     let (y_min, y_max) = match N {
@@ -29,11 +31,13 @@ fn range_knots<const K:usize, const N:usize>(s: &SplineCurve<K,N>) -> Result<[f6
             s.c[nc_2..nc].iter().cloned().reduce(f64::min).unwrap(),
             s.c[nc_2..nc].iter().cloned().reduce(f64::max).unwrap(),
         ),
-        _ => return Err("Only one and two dimensional curve splnies supported".into())
+        _ => return Err("Only one and two dimensional curve splines supported".into())
     };
     Ok([x_min, x_max, y_min, y_max])
 }
 
+/// Returns `[x_min, x_max, y_min, y_max]` derived from the evaluated spline points.
+/// `u` is the parameter array; `xn` is the interleaved output from `evaluate`.
 fn range_spline(u: &[f64], xn: &[f64]) -> Result<[f64;4]> {
     let n = xn.len()/u.len();
     let (x_min, x_max) = match n {
@@ -42,9 +46,8 @@ fn range_spline(u: &[f64], xn: &[f64]) -> Result<[f64;4]> {
             u.iter().cloned().reduce(f64::max).unwrap(),
         ),
         2 => (
-            // step-by starts at 0
-            xn.iter().step_by(1).cloned().reduce(f64::min).unwrap(),
-            xn.iter().step_by(1).cloned().reduce(f64::max).unwrap(),
+            xn.iter().step_by(2).cloned().reduce(f64::min).unwrap(),
+            xn.iter().step_by(2).cloned().reduce(f64::max).unwrap(),
         ),
         _ => return Err("only dimensions 0 and 1 supported".into())
     };
@@ -54,8 +57,8 @@ fn range_spline(u: &[f64], xn: &[f64]) -> Result<[f64;4]> {
             xn.iter().cloned().reduce(f64::max).unwrap(),
         ),
         2 => (
-            xn.iter().skip(1).step_by(1).cloned().reduce(f64::min).unwrap(),
-            xn.iter().skip(1).step_by(1).cloned().reduce(f64::max).unwrap(),
+            xn.iter().skip(1).step_by(2).cloned().reduce(f64::min).unwrap(),
+            xn.iter().skip(1).step_by(2).cloned().reduce(f64::max).unwrap(),
         ),
         _ => return Err("only dimensions 0 and 1 supported".into())
     };
@@ -65,7 +68,13 @@ fn range_spline(u: &[f64], xn: &[f64]) -> Result<[f64;4]> {
 
 
 
-/// Plots a two-dimensional (xy) spline curve for testing review
+/// Internal implementation shared by all `plot*` methods on [`SplineCurve`].
+///
+/// - `u`: optional explicit parameter values; if `None`, `M` evenly-spaced values spanning the
+///   full knot range are generated automatically.
+/// - `xy`: optional reference data to overlay as a black line (interleaved 2D coordinates).
+/// - `plot_control_points`: if `true` (2D only), draws the B-spline control points as circles and
+///   sizes the axes to encompass the full control polygon rather than just the curve.
 pub(crate) fn plot_base<const K: usize, const N: usize>(
     s: SplineCurve<K,N>,
     filepath: &str,
@@ -75,7 +84,8 @@ pub(crate) fn plot_base<const K: usize, const N: usize>(
     plot_control_points: bool,
 ) -> Result<()> {
 
-    const M:usize = 101;
+    // Number of sample points used when no explicit parameter values are provided.
+    const M: usize = 101;
 
     let uv: Vec<f64>;
 
@@ -84,6 +94,7 @@ pub(crate) fn plot_base<const K: usize, const N: usize>(
         let tb = s.t[0];
         let te = s.t[n-1];
         let ts = (te-tb)/(M-1) as f64;
+        // Generate M evenly-spaced values from tb to te (inclusive) using a running sum.
         uv = repeat(ts).take(M).scan(tb, |s, x| { let t= *s;  *s+=x; Some(t)}).collect();
         &uv
     });
@@ -105,7 +116,6 @@ pub(crate) fn plot_base<const K: usize, const N: usize>(
 
 
     let spline_color = HSLColor(0.5, 0.5, 0.4);
-    //let spline_coef_color = HSLColor(0.05, 0.5, 0.4);
 
     let mut chartarea = BitMapBackend::new(filepath, (wxh.0, wxh.1)).into_drawing_area();
     chartarea.fill(&WHITE)?;
@@ -123,7 +133,6 @@ pub(crate) fn plot_base<const K: usize, const N: usize>(
     // draw the mesh
     chart.configure_mesh()
         .x_labels(10)
-        .x_label_formatter(&|v| if v>=&300E-9 && v<=&1E-6 {format!("{}", v*1E9)} else {format!("{}", v)})
         .label_style(TextStyle::from(("sans-serif", 20).into_font()))
         .draw()?;
 
@@ -133,12 +142,9 @@ pub(crate) fn plot_base<const K: usize, const N: usize>(
         let nc_2 = nc/2;
         let c_x = &s.c[0..nc_2];
         let c_y =  &s.c[nc_2..nc];
-       // let c: Vec<(f64,f64)> = c_x.iter().cloned().zip(c_y.iter().cloned()).collect();
         chart.draw_series(
-           c_x.iter().cloned().zip(c_y.iter().cloned()) 
-         //   control_points(&s)?
-         //       .into_iter()
-                .map(|xy|Circle::new(xy, 6, spline_color.filled())),
+            c_x.iter().cloned().zip(c_y.iter().cloned())
+                .map(|xy| Circle::new(xy, 6, spline_color.filled())),
         )?;
     }
 
@@ -155,12 +161,12 @@ pub(crate) fn plot_base<const K: usize, const N: usize>(
     }
 
     // xy value target of fit
-    if xy.is_some() {
+    if let Some(xy) = xy {
         chart.draw_series(LineSeries::new(
-            xy.unwrap().chunks(2).map(|xy|(xy[0],xy[1])),
+            xy.chunks(2).map(|xy|(xy[0],xy[1])),
             BLACK.mix(1.0).stroke_width(2),
         ))?;
-    }   
+    }
 
 
         chartarea.present()?;

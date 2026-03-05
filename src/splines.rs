@@ -4,23 +4,40 @@ use crate::SplineCurve;
 
 use super::Result;
 
-/**
- * General B-Spline Curve Knot/Coefficient Representation
- */
-
+/// A `const`-friendly collection of named B-Spline curves sharing a degree `K` and dimension `N`.
+///
+/// `NK` is the number of named curves, `NT` the total number of knot values across all curves,
+/// and `NC` the total number of coefficients across all curves.
+///
+/// Knots are stored as `i32` to allow `const` initialization. Each entry in `keys` holds the
+/// curve name and `[start, end)` index ranges into the shared `t` and `c` arrays.
+///
+/// The stored knots are the **interior** knot sequence (without boundary repetitions). When a
+/// curve is retrieved via [`spline_curve`](SplineCurves::spline_curve), `K` copies of the first
+/// and last knot value are prepended/appended automatically to form a clamped knot vector.
 pub struct SplineCurves<const K: usize, const N: usize, const NK: usize, const NT:usize, const NC: usize> {
     keys: [(&'static str, [usize;2], [usize;2]); NK],
-    t: [i32; NT], // Knot values
+    t: [i32; NT], // Knot values (interior knots; boundary repetitions added in spline_curve)
     c: [f64; NC], // b-Spline coefficients
 }
 
 impl<const K: usize, const N: usize, const NK: usize, const NC: usize, const NT: usize> SplineCurves<K, N, NK, NT, NC> {
+    /// Creates a new `SplineCurves` collection. Intended for use in `static` or `const` contexts.
+    ///
+    /// See the struct-level documentation for the expected layout of `keys`, `t`, and `c`.
     pub const fn new(keys: [(&'static str, [usize;2], [usize;2]); NK], t: [i32; NT], c: [f64; NC]) -> Self {
         Self { keys, t, c }
     }
 
+    /// Looks up a named curve and returns it as a [`SplineCurve`].
+    ///
+    /// The stored interior knots are expanded into a full clamped knot vector by prepending and
+    /// appending `K` repetitions of the first and last knot values respectively.
+    ///
+    /// # Errors
+    /// Returns an error if `key` does not match any entry in the collection.
     pub fn spline_curve(&self, key: &str) -> Result<SplineCurve<K,N>> {
-        for (s, [ts,te], [cs, ce]) in self.keys {
+        for &(s, [ts,te], [cs, ce]) in &self.keys {
             if key == s {
                 let ti = &self.t[ts..te];
                 let t: Vec<f64> = 
@@ -42,6 +59,10 @@ impl<const K: usize, const N: usize, const NK: usize, const NC: usize, const NT:
         Err("Key not found".into())
     }
 
+    /// Looks up a named curve and evaluates it at the given parameter values `u`.
+    ///
+    /// Equivalent to calling [`spline_curve`](Self::spline_curve) followed by
+    /// [`SplineCurve::evaluate`].
     pub fn evaluate(&self, key: &str, u: &[f64]) -> Result<Vec<f64>> {
         let sc = self.spline_curve(key)?;
         sc.evaluate(u)
@@ -80,12 +101,19 @@ mod tests {
     );
 
     #[test]
+    fn key_not_found_returns_error() {
+        assert!(MUNSELL_MATT.spline_curve("nonexistent").is_err());
+    }
+
+    #[test]
     fn static_munsell_matt() -> Result<()>{
         let sc1 =  MUNSELL_MATT.spline_curve("2.5R9/2").unwrap();
         println!("{:?}", sc1);
+        #[cfg(feature = "plot")]
         sc1.plot("sc1.png", (2000,1000))?;
         let sc2 =  MUNSELL_MATT.spline_curve("2.5R6/4").unwrap();
         println!("{:?}", sc2);
+        #[cfg(feature = "plot")]
         sc2.plot("sc2.png", (2000,1000))?;
         Ok(())
     }

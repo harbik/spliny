@@ -1,19 +1,20 @@
 # Spliny: Working with Spline Curves
 
-[Spine curves](https://en.wikipedia.org/wiki/Spline_(mathematics)) are piecewise polynomial (parametric) curves, 
+[Spine curves](https://en.wikipedia.org/wiki/Spline_(mathematics)) are piecewise polynomial (parametric) curves,
 used for interpolation, curve fitting, and data smoothing.
 
 `Spliny` is a (tiny) pure Rust library for using spline curves, based a `spliny`'s knots and control points in `SplineCurve<K,N>`,
 and to plot splines --currently limited to 1 and 2D splines-- to check the results.
 It does not fit spline functions to data-sets: see the `Splinify`-crate  for that purpose.
 
-# Example 1: Lissajous Curve Fit
+## Example 1: Lissajous Curve Fit
+
 Get a spline curve for a Lissajous-dataset, with plot and JSON representation:
 <center>
-<img src="https://www.harbik.com/img/dierckx/lissajous.png" height="800"/>
+<img src="https://www.harbik.com/img/dierckx/lissajous.png" height="800" alt="Lissajous curve fit plot"/>
 </center>
 
-```rust
+```rust,ignore
 use splinify::{CubicSplineFit2D, Result};
 
 fn lissajous(t:f64, a: f64, kx: f64, b: f64, ky: f64) -> [f64;2] {
@@ -42,6 +43,7 @@ fn main() -> Result<()> {
 ```
 
 And here is its associated `Spliny`` JSON representation
+
 ```json
 {
   "t": [
@@ -69,14 +71,14 @@ And here is its associated `Spliny`` JSON representation
 }
 ```
 
-# Example 2: 4 Control Point Cubic Spline
+## Example 2: 4 Control Point Cubic Spline
 
 Here a Cubic Spline is constructed from 4 control points:
 <center>
-<img src="https://www.harbik.com/img/dierckx/cubic2d.png" height="800"/>
+<img src="https://www.harbik.com/img/dierckx/cubic2d.png" height="800" alt="Cubic spline curve with 4 control points"/>
 </center>
 
-```rust
+```rust,ignore
 use spliny::{CubicSpline2D, Result};
 
 pub fn main() -> Result<()> {
@@ -91,11 +93,10 @@ pub fn main() -> Result<()> {
     Ok(())
 }
 ```
+
 The control points are four control points: (0,2), (.5,-3), (1,3), and (3,-3), and the curve has 8 knots.
 
-
-
-# Usage
+## Usage
 
 Spliny is developed as part of a family of three crates but can be used independently too:
 
@@ -106,19 +107,20 @@ and `u` and `xyn` vectors in case of N-dimensional curves.
 
 - Use **spliny** to to use the generated splines, for example, to calculate curve coordinates or spline curves derivatives.
 This package also implements basic tools for the input and output of spline representations in JSON files and spline plots.
-It is written in Rust and does **not** require a Fortran compiler. 
+It is written in Rust and does **not** require a Fortran compiler.
 
-- **dierckx-sys** contains Fortran foreign function interfaces to Paul Dierckx' FITPACK library. 
+- **dierckx-sys** contains Fortran foreign function interfaces to Paul Dierckx' FITPACK library.
 It is used by `splinify`, but ---unless you want to explore Paul Dierckx library yourself--- can be ignored as concerned to using `splinify` and `spliny`.
 
 To use this library, add this to your `Cargo.toml` file:
 
-```no_run
+```toml
 [dependencies]
-spliny = "0.1"
+spliny = "0.3"
 ```
 
-# Spline Curve
+## Spline Curve
+
 The base spline representation in `Spliny` is the `SplineCurve<K,N>` object ---a wrapper for a vector of knots, and
 fit coefficients--- with *K* the spline degree, *N* the space dimension of the curve spline.
 
@@ -136,26 +138,14 @@ For convenience, the following aliases have been defined:
 | `CubicSpline3D`       | 3 | 3 |
 | `QuinticSpline3D`     | 5 | 3 |
 
+## License
 
-# Change Log
-
-## 0.1.1 
-
-Plot routines now use the `plot` feature, which is, by default, enabled.
-You can disable this feature by setting  `default-features=false`:
-```no_run
-    // use this in cargo.toml to disable import of plot routines
-    [dependencies]
-    spliny = {version = "0.1.0", default-features = false}
-```
-
-# License
 All content &copy;2022 Harbers Bik LLC, and licensed under either of
 
- * Apache License, Version 2.0
-   ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
- * MIT license
-   ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>?)
+- Apache License, Version 2.0
+  ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license
+  ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>?)
 
 at your option.
 
